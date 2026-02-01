@@ -1,140 +1,119 @@
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
-local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-local guiName = "DeathScreenUi"
+local pGui = player:WaitForChild("PlayerGui")
 
-if player:WaitForChild("PlayerGui"):FindFirstChild(guiName) then
-	player.PlayerGui[guiName]:Destroy()
+if pGui:FindFirstChild("DeathScreenUi") then
+	pGui.DeathScreenUi:Destroy()
 end
 
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = guiName
+screenGui.Name = "DeathScreenUi"
 screenGui.IgnoreGuiInset = true
 screenGui.DisplayOrder = 1000
 screenGui.ResetOnSpawn = false
-screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.Parent = pGui
 
-local blur = Instance.new("BlurEffect")
-blur.Size = 0
+local blur = Lighting:FindFirstChild("DeathBlur") or Instance.new("BlurEffect")
 blur.Name = "DeathBlur"
+blur.Size = 0
 blur.Parent = Lighting
 
-local colorCorrection = Instance.new("ColorCorrectionEffect")
-colorCorrection.Saturation = 0
-colorCorrection.TintColor = Color3.fromRGB(255, 255, 255)
-colorCorrection.Name = "DeathColor"
-colorCorrection.Parent = Lighting
+local cc = Lighting:FindFirstChild("DeathColor") or Instance.new("ColorCorrectionEffect")
+cc.Name = "DeathColor"
+cc.Saturation = 0
+cc.Parent = Lighting
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(1, 0, 1, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
-mainFrame.BackgroundTransparency = 1
-mainFrame.Parent = screenGui
+local overlay = Instance.new("Frame")
+overlay.Size = UDim2.new(1, 0, 1, 0)
+overlay.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+overlay.BackgroundTransparency = 1
+overlay.Visible = false
+overlay.Parent = screenGui
 
-local container = Instance.new("Frame")
-container.Size = UDim2.new(1, 0, 1, 0)
-container.BackgroundTransparency = 1
-container.Parent = mainFrame
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 80)
+title.Position = UDim2.new(0, 0, 0.42, 0)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Text = "N E U T R A L I Z A D O"
+title.Font = Enum.Font.GothamMedium
+title.TextSize = 20
+title.TextTransparency = 1
+title.Parent = overlay
 
-local titleText = Instance.new("TextLabel")
-titleText.Size = UDim2.new(1, 0, 0, 80)
-titleText.Position = UDim2.new(0, 0, 0.42, 0)
-titleText.BackgroundTransparency = 1
-titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleText.Text = "N E U T R A L I Z A D O"
-titleText.Font = Enum.Font.GothamMedium
-titleText.TextSize = 0 
-titleText.TextTransparency = 1
-titleText.Parent = container
+local sub = Instance.new("TextLabel")
+sub.Size = UDim2.new(1, 0, 0, 30)
+sub.Position = UDim2.new(0, 0, 0.52, 0)
+sub.BackgroundTransparency = 1
+sub.TextColor3 = Color3.fromRGB(180, 180, 180)
+sub.Text = "Sinal vital perdido. Reiniciando..."
+sub.Font = Enum.Font.Gotham
+sub.TextSize = 18
+sub.TextTransparency = 1
+sub.Parent = overlay
 
-local subtitleText = Instance.new("TextLabel")
-subtitleText.Size = UDim2.new(1, 0, 0, 30)
-subtitleText.Position = UDim2.new(0, 0, 0.52, 0)
-subtitleText.BackgroundTransparency = 1
-subtitleText.TextColor3 = Color3.fromRGB(180, 180, 180)
-subtitleText.Text = "Sinal vital perdido. Reiniciando..."
-subtitleText.Font = Enum.Font.Gotham
-subtitleText.TextSize = 18
-subtitleText.TextTransparency = 1
-subtitleText.Parent = container
+local barBg = Instance.new("Frame")
+barBg.Size = UDim2.new(0, 350, 0, 3)
+barBg.Position = UDim2.new(0.5, -175, 0.6, 0)
+barBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+barBg.BackgroundTransparency = 1
+barBg.BorderSizePixel = 0
+barBg.Parent = overlay
 
-local progressBarBg = Instance.new("Frame")
-progressBarBg.Size = UDim2.new(0, 350, 0, 3)
-progressBarBg.Position = UDim2.new(0.5, -175, 0.6, 0)
-progressBarBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-progressBarBg.BackgroundTransparency = 1
-progressBarBg.BorderSizePixel = 0
-progressBarBg.Parent = container
+local barFill = Instance.new("Frame")
+barFill.Size = UDim2.new(0, 0, 1, 0)
+barFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+barFill.BorderSizePixel = 0
+barFill.Parent = barBg
 
-local progressBarFill = Instance.new("Frame")
-progressBarFill.Size = UDim2.new(0, 0, 1, 0)
-progressBarFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-progressBarFill.BorderSizePixel = 0
-progressBarFill.Parent = progressBarBg
+local function deathSequence()
+	local cam = workspace.CurrentCamera
+	cam.CameraType = Enum.CameraType.Scriptable
+	
+	overlay.Visible = true
+	
+	TweenService:Create(blur, TweenInfo.new(0.6), {Size = 70}):Play()
+	TweenService:Create(cc, TweenInfo.new(0.6), {Saturation = -1, Contrast = 0.2}):Play()
+	TweenService:Create(overlay, TweenInfo.new(0.6), {BackgroundTransparency = 0.15}):Play()
 
-local function onDeath()
-	local camera = workspace.CurrentCamera
-	camera.CameraType = Enum.CameraType.Scriptable
-
-	if player.Character and player.Character:FindFirstChild("Humanoid") then
-		player.Character.Humanoid.WalkSpeed = 0
-		player.Character.Humanoid.JumpPower = 0
-	end
-
-	mainFrame.Visible = true
-	mainFrame.BackgroundTransparency = 1
-	titleText.TextTransparency = 1
-	titleText.TextSize = 20
-	subtitleText.TextTransparency = 1
-	progressBarBg.BackgroundTransparency = 1
-	progressBarFill.Size = UDim2.new(0, 0, 1, 0)
-
-	TweenService:Create(blur, TweenInfo.new(0.5), {Size = 50}):Play()
-	TweenService:Create(colorCorrection, TweenInfo.new(0.5), {Saturation = -1, Contrast = 0.2}):Play()
-	TweenService:Create(mainFrame, TweenInfo.new(0.5), {BackgroundTransparency = 0.2}):Play()
-
-	task.wait(0.2)
-
-	local textTween = TweenService:Create(titleText, 
-		TweenInfo.new(1.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), 
-		{TextTransparency = 0, TextSize = 45}
-	)
-	textTween:Play()
+	task.wait(0.3)
+	TweenService:Create(title, TweenInfo.new(1.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {TextTransparency = 0, TextSize = 45}):Play()
 
 	task.wait(0.5)
-	TweenService:Create(subtitleText, TweenInfo.new(0.8), {TextTransparency = 0.5}):Play()
+	TweenService:Create(sub, TweenInfo.new(0.8), {TextTransparency = 0.5}):Play()
 
 	task.wait(0.5)
-	TweenService:Create(progressBarBg, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play()
-
-	progressBarFill:TweenSize(UDim2.new(1, 0, 1, 0), Enum.EasingDirection.Linear, Enum.EasingStyle.Linear, 4.5)
+	barBg.BackgroundTransparency = 0
+	barFill:TweenSize(UDim2.new(1, 0, 1, 0), "Out", "Linear", 4.5)
 
 	task.wait(4.5)
-
-	TweenService:Create(titleText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-	TweenService:Create(subtitleText, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-	TweenService:Create(progressBarBg, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-	TweenService:Create(progressBarFill, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-	TweenService:Create(mainFrame, TweenInfo.new(0.8), {BackgroundTransparency = 1}):Play()
 end
 
-local function setup(char)
-	local camera = workspace.CurrentCamera
-	camera.CameraType = Enum.CameraType.Custom
-	camera.CameraSubject = char:WaitForChild("Humanoid")
-
-	TweenService:Create(blur, TweenInfo.new(1), {Size = 0}):Play()
-	TweenService:Create(colorCorrection, TweenInfo.new(1), {Saturation = 0, Contrast = 0}):Play()
-	mainFrame.Visible = false
-
+local function init(char)
 	local hum = char:WaitForChild("Humanoid")
-	hum.Died:Connect(onDeath)
+	local cam = workspace.CurrentCamera
+	
+	cam.CameraType = Enum.CameraType.Custom
+	cam.CameraSubject = hum
+	
+	blur.Size = 0
+	cc.Saturation = 0
+	cc.Contrast = 0
+	
+	overlay.Visible = false
+	overlay.BackgroundTransparency = 1
+	title.TextTransparency = 1
+	sub.TextTransparency = 1
+	barBg.BackgroundTransparency = 1
+	barFill.Size = UDim2.new(0, 0, 1, 0)
+
+	hum.Died:Connect(deathSequence)
 end
 
-if player.Character then setup(player.Character) end
-player.CharacterAdded:Connect(setup)
+player.CharacterAdded:Connect(init)
+if player.Character then init(player.Character) end
 
 -- Obrigado por ver esté codigo :)
